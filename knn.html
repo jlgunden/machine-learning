@@ -1,0 +1,124 @@
+
+<script>
+
+var data = [
+    {rooms: 1, area: 350, type: 'apartment'},
+    {rooms: 2, area: 300, type: 'apartment'},
+    {rooms: 3, area: 300, type: 'apartment'},
+    {rooms: 4, area: 250, type: 'apartment'},
+    {rooms: 4, area: 500, type: 'apartment'},
+    {rooms: 4, area: 400, type: 'apartment'},
+    {rooms: 5, area: 450, type: 'apartment'},
+
+    {rooms: 7, area: 850, type: 'house'},
+    {rooms: 7, area: 900, type: 'house'},
+    {rooms: 7, area: 1200, type: 'house'},
+    {rooms: 8, area: 1500, type: 'house'},
+    {rooms: 9, area: 1300, type: 'house'},
+    {rooms: 8, area: 1240, type: 'house'},
+    {rooms: 10, area: 1700, type: 'house'},
+    {rooms: 9, area: 1000, type: 'house'},
+
+    {rooms: 1, area: 800, type: 'flat'},
+    {rooms: 3, area: 900, type: 'flat'},
+    {rooms: 2, area: 700, type: 'flat'},
+    {rooms: 1, area: 900, type: 'flat'},
+    {rooms: 2, area: 1150, type: 'flat'},
+    {rooms: 1, area: 1000, type: 'flat'},
+    {rooms: 2, area: 1200, type: 'flat'},
+    {rooms: 1, area: 1300, type: 'flat'}
+];
+
+var node = function(object) {
+  for (var key in object) {
+    this[key] = object[key];
+  }
+};
+
+
+var node_list = function(k, features) {
+  this.nodes = [];
+  this.k = k;
+  this.features = features;
+};
+
+node_list.prototype.add = function(node) {
+  this.nodes.push(node);
+};
+
+// each key is the feature name, value is an object to store attributes
+// should the need arise
+var features = {
+  'rooms': {},
+  'areas': {}
+};
+
+node_list.prototype.calculate_ranges = function() {
+
+  for (var key in this.features) {
+    var feature = this.features[key];
+    this[key] = {'min': 1000000, 'max': 0};
+  }
+
+  console.log(this);
+
+  for (var key in this.features) {
+
+    for (var i; i < this.nodes.length; i++) {
+
+      if (this.nodes[i][key] < this[key].min) {
+        this[key].min = this.nodes[i][key];
+      }
+
+      if (this.nodes[i][key] > this[key].max) {
+        this[key].max = this.nodes[i][key];
+      }
+
+    }
+  }
+};
+
+node_list.prototype.determine_unknown = function() {
+  this.calculate_ranges();
+
+  for (var i; i < this.nodes.length; i++) {
+
+    if (!this.nodes[i].type) {
+      this.nodes[i].neighbors = [];
+
+      for (var j; j < this.nodes.length; j++) {
+        if (!this.nodes[j].type) {
+          continue;
+        }
+        this.nodes[i].neighbors.push(new node(this.nodes[j]));
+      }
+
+      this.nodes[i].measure_distances();
+
+      this.nodes[i].sort_by_distance();
+
+      console.log(this.nodes[i].guess_type(this.k));
+    }
+  }
+};
+
+node.prototype.measure_distances = function() {
+
+  // for (var key in this.features) {
+  //   var key_range = this.features[key].max - this.features[key].min;
+
+  //   for (var i; i < this.neighbors.length; i++) {
+  //     var neighbor = this.neighbors[i];
+
+  //     // var delta_feature = neighbor[key] - this[key];
+  //     // delta_feature = (delta_feature) / key_range;
+
+    }
+  }
+}
+
+var n = new node_list(1);
+n.calculate_ranges(features);
+</script>
+
+<canvas id="knn"></canvas>
