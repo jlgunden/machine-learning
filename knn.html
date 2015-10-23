@@ -110,7 +110,7 @@ var node_list = function(k, features) {
   this.features = features;
 };
 
-/** This needs to be dynamically generated based on the # of features */
+/** This needs to be dynamically generated based on the # of types */
 node_list.prototype.colors = ['red', 'green', 'blue'];
 
 node_list.prototype.add = function(node) {
@@ -156,51 +156,6 @@ node_list.prototype.determine_unknown = function() {
     }
   }
 };
-
-// node_list.prototype.draw = function(canvas_id) {
-//   var key_ranges = {};
-
-//   for (var feature in features) {
-//     key_ranges[feature + '_range'] = features[feature].max - features[feature].min;
-//   }
-
-//   var canvas = document.getElementById(canvas_id);
-//   var ctx = canvas.getContext('2D');
-//   var width = 400;
-//   var height = 400;
-//   ctx.clearRect(0, 0, width, height);
-
-//   var feature_to_color = {};
-//   for (var feature in this.features) {
-//     var color = this.colors.pop();
-//     feature_to_color[feature] = color;
-//   }
-
-//   for (var i = 0; i < this.nodes.length; i++) {
-//     ctx.save();
-
-//     for (var feature in this.features) {
-//       if (feature_to_color[feature]) {
-//         ctx.fillStyle = feature_to_color[feature];
-//       }
-//       else {
-//         ctx.fillStyle = '#666666';
-//       }
-//     }
-
-//     var padding = 40;
-//     var x_shift_pct = (width - padding) / width;
-//     var y_shift_pct = (height - padding) / height;
-
-//     for (var feature in this.features) {
-//       var x = (this.nodes[i][feature] - this[feature].min) *
-//         (width / key_ranges[feature + '_range']) *
-//         x_shift_pct + (padding / 2);
-
-//       var
-//     }
-//   }
-// };
 
 
 var run = function() {
