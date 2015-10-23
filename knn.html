@@ -29,10 +29,78 @@ var data = [
     {rooms: 1, area: 1300, type: 'flat'}
 ];
 
+// each key is the feature name, value is an object to store attributes
+// should the need arise
+var features = {
+  'rooms': {},
+  'area': {}
+};
 var node = function(object) {
   for (var key in object) {
     this[key] = object[key];
   }
+};
+
+node.prototype.measure_distances = function(features) {
+  var key_ranges = {};
+
+  for (var feature in features) {
+    key_ranges[feature + '_range'] = features[feature].max - features[feature].min;
+  }
+
+  for (var i = 0; i < this.neighbors.length; i++) {
+
+    var neighbor = this.neighbors[i];
+
+    var delta_features = [];
+    for (var feature in features) {
+      var delta_feature = neighbor[feature] - this[feature];
+      delta_feature = (delta_feature) / key_ranges[feature + '_range'];
+      delta_features.push(delta_feature);
+    }
+
+    var distance = delta_features.reduce(function(previousValue, currentValue) {
+      return (previousValue * previousValue) + (currentValue * currentValue);
+    });
+
+    neighbor.distance = Math.sqrt(distance);
+  }
+};
+
+node.prototype.sort_by_distance = function() {
+  this.neighbors.sort(function(a, b) {
+    return a.distance - b.distance;
+  });
+};
+
+node.prototype.guess_type = function(k) {
+  var types = {};
+
+  for (var i = 0; i < this.neighbors.slice(0, k).length; i++) {
+    var neighbor = this.neighbors[i];
+
+    if (!types[neighbor.type]) {
+      types[neighbor.type] = 0;
+    }
+
+    types[neighbor.type] += 1;
+  }
+
+  var guess = {
+    'type': false,
+    'count': 0
+  };
+
+  for (var type in types) {
+    if (types[type] > guess.count) {
+      guess.type = type;
+      guess.count = types[type];
+    }
+  }
+
+  this.guess = guess;
+
+  return types;
 };
 
 
@@ -42,38 +110,25 @@ var node_list = function(k, features) {
   this.features = features;
 };
 
+/** This needs to be dynamically generated based on the # of features */
+node_list.prototype.colors = ['red', 'green', 'blue'];
+
 node_list.prototype.add = function(node) {
   this.nodes.push(node);
 };
 
-// each key is the feature name, value is an object to store attributes
-// should the need arise
-var features = {
-  'rooms': {},
-  'areas': {}
-};
-
 node_list.prototype.calculate_ranges = function() {
+  for (var feature in this.features) {
+    this.features[feature] = {'min': 10000000, 'max': 0};
 
-  for (var key in this.features) {
-    var feature = this.features[key];
-    this[key] = {'min': 1000000, 'max': 0};
-  }
-
-  console.log(this);
-
-  for (var key in this.features) {
-
-    for (var i; i < this.nodes.length; i++) {
-
-      if (this.nodes[i][key] < this[key].min) {
-        this[key].min = this.nodes[i][key];
+    for (var i = 0; i < this.nodes.length; i++) {
+      if (this.nodes[i][feature] < this.features[feature].min) {
+        this.features[feature].min = this.nodes[i][feature];
       }
 
-      if (this.nodes[i][key] > this[key].max) {
-        this[key].max = this.nodes[i][key];
+      if (this.nodes[i][feature] > this.features[feature].max) {
+        this.features[feature].max = this.nodes[i][feature];
       }
-
     }
   }
 };
@@ -81,19 +136,19 @@ node_list.prototype.calculate_ranges = function() {
 node_list.prototype.determine_unknown = function() {
   this.calculate_ranges();
 
-  for (var i; i < this.nodes.length; i++) {
+  for (var i = 0; i < this.nodes.length; i++) {
 
     if (!this.nodes[i].type) {
       this.nodes[i].neighbors = [];
 
-      for (var j; j < this.nodes.length; j++) {
+      for (var j = 0; j < this.nodes.length; j++) {
         if (!this.nodes[j].type) {
           continue;
         }
         this.nodes[i].neighbors.push(new node(this.nodes[j]));
       }
 
-      this.nodes[i].measure_distances();
+      this.nodes[i].measure_distances(this.features);
 
       this.nodes[i].sort_by_distance();
 
@@ -102,23 +157,72 @@ node_list.prototype.determine_unknown = function() {
   }
 };
 
-node.prototype.measure_distances = function() {
+// node_list.prototype.draw = function(canvas_id) {
+//   var key_ranges = {};
 
-  // for (var key in this.features) {
-  //   var key_range = this.features[key].max - this.features[key].min;
+//   for (var feature in features) {
+//     key_ranges[feature + '_range'] = features[feature].max - features[feature].min;
+//   }
 
-  //   for (var i; i < this.neighbors.length; i++) {
-  //     var neighbor = this.neighbors[i];
+//   var canvas = document.getElementById(canvas_id);
+//   var ctx = canvas.getContext('2D');
+//   var width = 400;
+//   var height = 400;
+//   ctx.clearRect(0, 0, width, height);
 
-  //     // var delta_feature = neighbor[key] - this[key];
-  //     // delta_feature = (delta_feature) / key_range;
+//   var feature_to_color = {};
+//   for (var feature in this.features) {
+//     var color = this.colors.pop();
+//     feature_to_color[feature] = color;
+//   }
 
-    }
+//   for (var i = 0; i < this.nodes.length; i++) {
+//     ctx.save();
+
+//     for (var feature in this.features) {
+//       if (feature_to_color[feature]) {
+//         ctx.fillStyle = feature_to_color[feature];
+//       }
+//       else {
+//         ctx.fillStyle = '#666666';
+//       }
+//     }
+
+//     var padding = 40;
+//     var x_shift_pct = (width - padding) / width;
+//     var y_shift_pct = (height - padding) / height;
+
+//     for (var feature in this.features) {
+//       var x = (this.nodes[i][feature] - this[feature].min) *
+//         (width / key_ranges[feature + '_range']) *
+//         x_shift_pct + (padding / 2);
+
+//       var
+//     }
+//   }
+// };
+
+
+var run = function() {
+  nodes = new node_list(3, features);
+
+  for (var i in data) {
+    nodes.add(new node(data[i]));
   }
-}
 
-var n = new node_list(1);
-n.calculate_ranges(features);
+  var random_rooms = Math.round(Math.random() * 10);
+  var random_area = Math.round(Math.random() * 2000);
+  var random_node = {
+    'rooms': random_rooms,
+    'area': random_area,
+    'type': false
+  };
+  nodes.add(new node(random_node));
+
+  nodes.determine_unknown();
+};
+
+run();
 </script>
 
 <canvas id="knn"></canvas>
