@@ -59,9 +59,14 @@ node.prototype.measure_distances = function(features) {
       delta_features.push(delta_feature);
     }
 
-    var distance = delta_features.reduce(function(previousValue, currentValue) {
-      return (previousValue * previousValue) + (currentValue * currentValue);
-    });
+    // Does not work for arrays of length > 2. For obvious reasons
+    // var distance = delta_features.reduce(function(previousValue, currentValue) {
+    //   return (previousValue * previousValue) + (currentValue * currentValue);
+    // });
+    distance = 0;
+    for (var i = 0; i < delta_features.length; i++) {
+      distance += delta_features[i] * delta_features[i];
+    }
 
     neighbor.distance = Math.sqrt(distance);
   }
